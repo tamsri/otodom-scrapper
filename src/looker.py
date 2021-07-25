@@ -5,6 +5,7 @@ import pandas as pd
 import re
 from math import floor
 from bs4 import BeautifulSoup
+from dateutil import parser
 from datetime import datetime
 
 URL = 'otodom.pl'
@@ -12,23 +13,19 @@ SEARCH_PER_PAGE = 72
 HEADERS = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'
     }
-class PropertyType(Enum):
-    DOM = 1
-    MIESZKANIE = 2
-
-class DealType(Enum):
-    BUY = 1
-    RENT = 2
 
 class Looker:
-    def __init__(self, city: str, dealType: DealType, 
-                propertyType: PropertyType, postAfter: str, postBefore: str, maxSearch: int = -1 ):
+    def __init__(self, city: str, dealType: str, 
+                propertyType: str, 
+                postAfter:datetime , postBefore: datetime, maxSearch: int):
         self.city = city
-        self.dealType = 'sprzedaz' if dealType == DealType.BUY else 'wynajem'
-        self.propertyType = 'dom' if propertyType == PropertyType.DOM else 'mieszkanie'
-        self.maxSearch = maxSearch if maxSearch >= 0 else 9999999
+        self.dealType =  dealType
+        self.propertyType = propertyType
+        self.maxSearch = maxSearch if maxSearch >= 0 else 99999
         self.data = []
         self.dataFrame = None
+        self.postAfter = postAfter
+        self.postBefore = postBefore
 
     def search(self):
         search_pages = floor(self.maxSearch/SEARCH_PER_PAGE)
@@ -59,6 +56,13 @@ class Looker:
                     property_dict['size'] = size
                     
                     property_info = self.search_info(info_url)
+                    if 'when' in property_info:
+                        when = parser.parse(property_info['when'])
+                        if when < self.postAfter and when > self.postBefore:
+                            continue
+                    else:
+                        continue
+
                     info_params = ['rynek', 'piętro', 'rok', 'zabudowy', 'balkon', 'when']
                     for param in info_params:
                         if param in property_info:
@@ -118,7 +122,12 @@ class Looker:
         if 'dateModified' in plain:
             cropped = plain.split('dateModified')[1][2:28]
             editTime = re.search('"(.*)","', cropped).group(1).strip()
-            print(editTime)
+            print('last modified: ' + str(editTime))
+            property_info['when'] = editTime
+        elif 'dateCreated' in plain:
+            cropped = plain.split('dateCreated')[1][2:28]
+            editTime = re.search('"(.*)","', cropped).group(1).strip()
+            print('created: ' + str(editTime))
             property_info['when'] = editTime
         return property_info
 
