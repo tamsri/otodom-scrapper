@@ -1,6 +1,6 @@
 from src.looker import DealType, Looker, PropertyType
 
 
-look = Looker('wroclaw', DealType.BUY, PropertyType.MIESZKANIE, 7000)
+look = Looker('poznan', DealType.BUY, PropertyType.MIESZKANIE, 1)
 look.search()
-look.save_csv()
+look.save_csv('poz.csv')

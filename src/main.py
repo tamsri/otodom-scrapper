@@ -16,6 +16,10 @@ def main():
         print("Amount of property (10, 20, 30, -1 [for all]) ")
         search_data['search_amount'] = int(input())
         searches.append(search_data)
+        print("Post After (eg. 2021-07)")
+        postAfter = input()
+        print("Post berfore (eg. 2021-08")
+        postBefore = input()
 
     print("Press any to start scrapping 😃")
     for search in searches:
